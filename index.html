@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>JS Trainer ⚡</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f1a;
+      --card: #13131f;
+      --border: #1e1b4b;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --accent: #f59e0b;
+      --accent2: #fbbf24;
+      --header-bg: linear-gradient(135deg, #1a1500, #2d2000);
+      --header-border: #3d2e00;
+      --sidebar-active: #2a1e00;
+      --sidebar-hover: #1a1400;
+      --panel-bg: #0a0a16;
+      --editor-bg: #08080f;
+      --ex-icon-bg: #1e1500;
+      --ex-icon-color: #f59e0b;
+      --ex-icon-border: #3d2e00;
+      --toolbar-bg: #0d0d1a;
+      --progress-track: #1e1500;
+      --scrollbar-track: #0f0f1a;
+      --scrollbar-thumb: #2d2a00;
+    }
+
+    body.light {
+      --bg: #fffbeb;
+      --card: #ffffff;
+      --border: #fde68a;
+      --text: #1c1200;
+      --muted: #92400e;
+      --header-bg: linear-gradient(135deg, #fef3c7, #fde68a);
+      --header-border: #fbbf24;
+      --sidebar-active: #fef3c7;
+      --sidebar-hover: #fffbeb;
+      --panel-bg: #fef9e7;
+      --editor-bg: #fffdf5;
+      --ex-icon-bg: #fef3c7;
+      --ex-icon-color: #d97706;
+      --ex-icon-border: #fbbf24;
+      --toolbar-bg: #fef3c7;
+      --progress-track: #fde68a;
+      --scrollbar-track: #fffbeb;
+      --scrollbar-thumb: #fbbf24;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    header {
+      background: var(--header-bg);
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--header-border);
+    }
+
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .logo { font-size: 2rem; }
+    header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text); }
+    header p { font-size: 0.88rem; color: var(--accent); margin-top: 3px; }
+
+    .header-controls { display: flex; align-items: center; gap: 10px; }
+
+    .theme-toggle {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      color: var(--text);
+      transition: all 0.2s;
+    }
+    .theme-toggle:hover { border-color: var(--accent); }
+
+    .lang-toggle {
+      display: flex;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .lang-btn {
+      padding: 7px 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      transition: all 0.2s;
+    }
+    .lang-btn.active { background: var(--accent); color: #1c1200; }
+
+    .progress-bar { height: 3px; background: var(--progress-track); }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 0.4s ease;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      height: calc(100vh - 91px);
+    }
+
+    .sidebar {
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 16px 0;
+    }
+    .sidebar-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      padding: 0 16px 12px;
+    }
+
+    .exercise-item {
+      padding: 12px 16px;
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .exercise-item:hover { background: var(--sidebar-hover); border-left-color: var(--accent); }
+    .exercise-item.active { background: var(--sidebar-active); border-left-color: var(--accent2); }
+
+    .ex-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      background: var(--ex-icon-bg);
+      color: var(--ex-icon-color);
+      border: 1px solid var(--ex-icon-border);
+    }
+    .exercise-item.done .ex-icon {
+      background: #1a3a2a;
+      color: #4ade80;
+      border-color: #166534;
+    }
+    .exercise-item.active .ex-icon { background: var(--accent); color: #1c1200; border-color: var(--accent2); }
+
+    .ex-info { flex: 1; min-width: 0; }
+    .ex-name { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+    .ex-level { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+
+    .badge-debutant { font-size: 0.65rem; padding: 2px 6px; border-radius: 999px; font-weight: 600; background: #1e3a5f; color: #60a5fa; }
+    .badge-intermediaire { font-size: 0.65rem; padding: 2px 6px; border-radius: 999px; font-weight: 600; background: #3b1f5e; color: #c084fc; }
+    .badge-avance { font-size: 0.65rem; padding: 2px 6px; border-radius: 999px; font-weight: 600; background: #5e1f1f; color: #f87171; }
+
+    .main { display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; }
+
+    .exercise-header {
+      padding: 20px 28px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+    }
+    .exercise-header h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+    .exercise-header p { font-size: 0.9rem; color: var(--muted); line-height: 1.6; white-space: pre-line; }
+
+    .hint-box {
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: #1e1500;
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+      font-size: 0.82rem;
+      color: var(--accent2);
+      display: none;
+      white-space: pre-line;
+    }
+    body.light .hint-box { background: #fef3c7; color: #92400e; }
+
+    .editor-zone { display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; }
+    .editor-panel, .output-panel { display: flex; flex-direction: column; overflow: hidden; }
+
+    .panel-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      padding: 8px 16px;
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    body.light .panel-label { background: #fef9e7; }
+
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot-amber { background: var(--accent); }
+    .dot-green { background: #22c55e; }
+
+    textarea#code-editor {
+      flex: 1;
+      background: var(--editor-bg);
+      color: var(--text);
+      border: none;
+      padding: 16px;
+      font-family: 'Fira Code', 'Courier New', monospace;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      resize: none;
+      outline: none;
+      border-right: 1px solid var(--border);
+      tab-size: 2;
+    }
+    body.light textarea#code-editor { background: #fffff8; color: #1c1200; }
+
+    #output {
+      flex: 1;
+      padding: 16px;
+      font-family: 'Fira Code', 'Courier New', monospace;
+      font-size: 0.88rem;
+      line-height: 1.7;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      color: var(--muted);
+    }
+    #output.success { color: #86efac; }
+    #output.error { color: #f87171; }
+
+    .expected-box {
+      padding: 10px 16px;
+      background: #0d1f1a;
+      border-top: 1px solid #166534;
+      font-size: 0.78rem;
+      color: #4ade80;
+      font-family: monospace;
+    }
+    body.light .expected-box { background: #f0fdf4; border-top-color: #86efac; color: #166534; }
+    .expected-box span.label { color: #166534; font-weight: 700; margin-right: 6px; }
+    body.light .expected-box span.label { color: #15803d; }
+
+    .toolbar {
+      padding: 12px 28px;
+      background: var(--toolbar-bg);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 9px 20px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    #btn-run { background: var(--accent); color: #1c1200; }
+    #btn-run:hover { background: var(--accent2); }
+    #btn-check { background: #166534; color: #86efac; }
+    #btn-check:hover { background: #15803d; }
+    #btn-hint { background: transparent; color: var(--accent); border: 1px solid var(--border); }
+    #btn-hint:hover { background: var(--sidebar-active); }
+    #btn-reset { background: transparent; color: var(--muted); border: 1px solid var(--border); margin-left: auto; }
+    #btn-reset:hover { color: var(--text); }
+
+    .status-msg {
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 6px;
+      display: none;
+    }
+    .status-msg.ok { background: #166534; color: #86efac; display: inline-block; }
+    .status-msg.fail { background: #7f1d1d; color: #f87171; display: inline-block; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+    ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="logo">⚡</div>
+    <div>
+      <h1>JS Trainer</h1>
+      <p data-i18n="subtitle">Progresse étape par étape en codant directement dans le navigateur</p>
+    </div>
+  </div>
+  <div class="header-controls">
+    <button class="theme-toggle" id="theme-toggle" title="Toggle theme">☀️</button>
+    <div class="lang-toggle">
+      <button class="lang-btn" id="btn-fr" onclick="setLang('fr')">🇫🇷 FR</button>
+      <button class="lang-btn" id="btn-en" onclick="setLang('en')">🇬🇧 EN</button>
+    </div>
+  </div>
+</header>
+
+<div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-title" data-i18n="exercises">Exercices</div>
+  </aside>
+  <div class="main">
+    <div class="exercise-header">
+      <h2 id="ex-title"></h2>
+      <p id="ex-description"></p>
+      <div class="hint-box" id="hint-box"></div>
+    </div>
+    <div class="editor-zone">
+      <div class="editor-panel">
+        <div class="panel-label">
+          <span class="dot dot-amber"></span>
+          <span data-i18n="your-code">Ton code</span>
+        </div>
+        <textarea id="code-editor" spellcheck="false"></textarea>
+      </div>
+      <div class="output-panel">
+        <div class="panel-label">
+          <span class="dot dot-green"></span>
+          <span data-i18n="result">Résultat</span>
+        </div>
+        <div id="output"></div>
+        <div class="expected-box">
+          <span class="label" data-i18n="expected">Attendu :</span><span id="expected-display"></span>
+        </div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button id="btn-run">▶ <span data-i18n="run">Exécuter</span></button>
+      <button id="btn-check">✓ <span data-i18n="validate">Valider</span></button>
+      <button id="btn-hint">💡 <span data-i18n="hint">Indice</span></button>
+      <span class="status-msg" id="status-msg"></span>
+      <button id="btn-reset">↺ <span data-i18n="reset">Réinitialiser</span></button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── i18n ────────────────────────────────────────────────────────────────────
+const I18N = {
+  fr: {
+    subtitle: 'Progresse étape par étape en codant directement dans le navigateur',
+    exercises: 'Exercices',
+    'your-code': 'Ton code',
+    result: 'Résultat',
+    expected: 'Attendu :',
+    run: 'Exécuter',
+    validate: 'Valider',
+    hint: 'Indice',
+    reset: 'Réinitialiser',
+    'msg-ok': '✓ Correct !',
+    'msg-fail': '✗ Pas encore...',
+    level: { debutant: 'Débutant', intermediaire: 'Intermédiaire', avance: 'Avancé' }
+  },
+  en: {
+    subtitle: 'Progress step by step by coding directly in the browser',
+    exercises: 'Exercises',
+    'your-code': 'Your code',
+    result: 'Result',
+    expected: 'Expected:',
+    run: 'Run',
+    validate: 'Validate',
+    hint: 'Hint',
+    reset: 'Reset',
+    'msg-ok': '✓ Correct!',
+    'msg-fail': '✗ Not yet...',
+    level: { debutant: 'Beginner', intermediaire: 'Intermediate', avance: 'Advanced' }
+  }
+};
+
+// ─── Exercises ───────────────────────────────────────────────────────────────
+const EXERCISES = [
+  {
+    id: 1, level: 'debutant',
+    name: { fr: 'Variables et opérations', en: 'Variables and operations' },
+    desc: {
+      fr: 'Déclare deux variables a=10 et b=3.\nAffiche leur somme, leur différence et leur produit (chacun sur une ligne).',
+      en: 'Declare two variables a=10 and b=3.\nPrint their sum, difference and product (each on a separate line).'
+    },
+    hint: {
+      fr: 'Utilise let pour déclarer une variable. console.log() affiche dans la console.',
+      en: 'Use let to declare a variable. console.log() prints to the console.'
+    },
+    starter: 'let a = 10;\nlet b = 3;\n// Ton code ici',
+    check: (output) => output.trim() === '13\n7\n30',
+    expected: '13\n7\n30'
+  },
+  {
+    id: 2, level: 'debutant',
+    name: { fr: 'Créer une fonction', en: 'Create a function' },
+    desc: {
+      fr: "Crée une fonction saluer(nom) qui retourne la chaîne 'Bonjour, [nom] !'\nAffiche saluer('Alice') et saluer('Bob').",
+      en: "Create a function saluer(nom) that returns the string 'Bonjour, [nom] !'\nPrint saluer('Alice') and saluer('Bob')."
+    },
+    hint: {
+      fr: "Syntaxe : function saluer(nom) { return 'Bonjour, ' + nom + ' !'; }",
+      en: "Syntax: function saluer(nom) { return 'Bonjour, ' + nom + ' !'; }"
+    },
+    starter: "function saluer(nom) {\n  // Ton code ici\n}\n\nconsole.log(saluer('Alice'));\nconsole.log(saluer('Bob'));",
+    check: (output) => output.trim() === 'Bonjour, Alice !\nBonjour, Bob !',
+    expected: 'Bonjour, Alice !\nBonjour, Bob !'
+  },
+  {
+    id: 3, level: 'debutant',
+    name: { fr: 'Condition if / else', en: 'if / else condition' },
+    desc: {
+      fr: 'Crée une fonction majeur(age) qui retourne true si age >= 18, false sinon.\nAffiche majeur(20), majeur(15), majeur(18).',
+      en: 'Create a function majeur(age) that returns true if age >= 18, false otherwise.\nPrint majeur(20), majeur(15), majeur(18).'
+    },
+    hint: {
+      fr: 'if (age >= 18) { return true; } else { return false; } — ou plus court : return age >= 18;',
+      en: 'if (age >= 18) { return true; } else { return false; } — or shorter: return age >= 18;'
+    },
+    starter: 'function majeur(age) {\n  // Ton code ici\n}\n\nconsole.log(majeur(20));\nconsole.log(majeur(15));\nconsole.log(majeur(18));',
+    check: (output) => output.trim() === 'true\nfalse\ntrue',
+    expected: 'true\nfalse\ntrue'
+  },
+  {
+    id: 4, level: 'debutant',
+    name: { fr: 'Boucle for', en: 'for loop' },
+    desc: {
+      fr: 'Affiche les nombres pairs de 2 à 10 (inclus), un par ligne.',
+      en: 'Print even numbers from 2 to 10 (inclusive), one per line.'
+    },
+    hint: {
+      fr: 'Utilise for (let i = 2; i <= 10; i += 2) pour incrémenter de 2 en 2.',
+      en: 'Use for (let i = 2; i <= 10; i += 2) to increment by 2.'
+    },
+    starter: '// Ton code ici',
+    check: (output) => output.trim() === '2\n4\n6\n8\n10',
+    expected: '2\n4\n6\n8\n10'
+  },
+  {
+    id: 5, level: 'intermediaire',
+    name: { fr: 'Tableaux — map()', en: 'Arrays — map()' },
+    desc: {
+      fr: 'Utilise map() pour créer un nouveau tableau où chaque élément est multiplié par 2.\nAffiche le résultat avec console.log.',
+      en: 'Use map() to create a new array where each element is multiplied by 2.\nPrint the result with console.log.'
+    },
+    hint: {
+      fr: 'const double = nombres.map(n => n * 2); — map() retourne un nouveau tableau.',
+      en: 'const double = nombres.map(n => n * 2); — map() returns a new array.'
+    },
+    starter: 'const nombres = [1, 2, 3, 4, 5];\n// Utilise map() pour doubler chaque élément\nconst double = nombres.map(/* ... */);\nconsole.log(double);',
+    check: (output) => output.trim().replace(/\s/g, '') === '[2,4,6,8,10]',
+    expected: '[2,4,6,8,10]'
+  },
+  {
+    id: 6, level: 'intermediaire',
+    name: { fr: 'Tableaux — filter()', en: 'Arrays — filter()' },
+    desc: {
+      fr: 'Utilise filter() pour garder uniquement les nombres > 5 du tableau.\nAffiche le résultat.',
+      en: 'Use filter() to keep only numbers > 5 from the array.\nPrint the result.'
+    },
+    hint: {
+      fr: 'const grands = nombres.filter(n => n > 5); — filter() retourne les éléments qui passent le test.',
+      en: 'const big = nombres.filter(n => n > 5); — filter() returns elements that pass the test.'
+    },
+    starter: 'const nombres = [2, 5, 6, 1, 8, 3, 7];\n// Utilise filter() pour garder seulement les nombres > 5\nconst grands = nombres.filter(/* ... */);\nconsole.log(grands);',
+    check: (output) => output.trim().replace(/\s/g, '') === '[6,8,7]',
+    expected: '[6,8,7]'
+  },
+  {
+    id: 7, level: 'intermediaire',
+    name: { fr: 'Arrow functions', en: 'Arrow functions' },
+    desc: {
+      fr: 'Réécris la fonction carre() en arrow function, puis affiche le carré de 3, 5 et 7.',
+      en: 'Rewrite the carre() function as an arrow function, then print the square of 3, 5 and 7.'
+    },
+    hint: {
+      fr: 'Arrow function : const carre = (n) => n * n; — ou const carre = n => n * n;',
+      en: 'Arrow function: const carre = (n) => n * n; — or const carre = n => n * n;'
+    },
+    starter: '// Réécris en arrow function\nconst carre = function(n) {\n  return n * n;\n};\n\nconsole.log(carre(3));\nconsole.log(carre(5));\nconsole.log(carre(7));',
+    check: (output, code) => output.trim() === '9\n25\n49' && code.includes('=>'),
+    expected: '9\n25\n49'
+  },
+  {
+    id: 8, level: 'intermediaire',
+    name: { fr: 'Objet JavaScript', en: 'JavaScript Object' },
+    desc: {
+      fr: "Crée un objet personne avec les propriétés nom ('Alice'), age (28) et ville ('Paris').\nAffiche : 'Alice a 28 ans et habite à Paris.'",
+      en: "Create a personne object with properties nom ('Alice'), age (28) and ville ('Paris').\nPrint: 'Alice a 28 ans et habite à Paris.'"
+    },
+    hint: {
+      fr: "const personne = { nom: 'Alice', age: 28, ville: 'Paris' };\nAccède aux propriétés avec personne.nom, personne.age, etc.",
+      en: "const personne = { nom: 'Alice', age: 28, ville: 'Paris' };\nAccess properties with personne.nom, personne.age, etc."
+    },
+    starter: "const personne = {\n  // Ajoute les propriétés ici\n};\n\nconsole.log(/* ... */);",
+    check: (output) => output.trim() === 'Alice a 28 ans et habite à Paris.',
+    expected: 'Alice a 28 ans et habite à Paris.'
+  },
+  {
+    id: 9, level: 'avance',
+    name: { fr: 'reduce() — Somme d\'un tableau', en: 'reduce() — Sum of an array' },
+    desc: {
+      fr: 'Utilise reduce() pour calculer la somme de tous les éléments du tableau.\nAffiche le résultat.',
+      en: 'Use reduce() to calculate the sum of all elements in the array.\nPrint the result.'
+    },
+    hint: {
+      fr: 'reduce((accumulateur, valeurActuelle) => accumulateur + valeurActuelle, 0)',
+      en: 'reduce((accumulator, currentValue) => accumulator + currentValue, 0)'
+    },
+    starter: 'const nombres = [10, 20, 30, 40, 50];\n// Utilise reduce() pour faire la somme\nconst somme = nombres.reduce(/* ... */);\nconsole.log(somme);',
+    check: (output) => output.trim() === '150',
+    expected: '150'
+  },
+  {
+    id: 10, level: 'avance',
+    name: { fr: 'Classe ES6', en: 'ES6 Class' },
+    desc: {
+      fr: 'Crée une classe Animal avec :\n• Un constructeur qui prend nom et son\n• Une méthode parler() qui affiche \'[nom] dit [son] !\'\nInstancie un chien et un chat, appelle parler() sur chacun.',
+      en: 'Create an Animal class with:\n• A constructor that takes nom and son\n• A parler() method that prints \'[nom] dit [son] !\'\nInstantiate a dog and a cat, call parler() on each.'
+    },
+    hint: {
+      fr: "class Animal { constructor(nom, son) { this.nom = nom; this.son = son; } parler() { console.log(...); } }",
+      en: "class Animal { constructor(nom, son) { this.nom = nom; this.son = son; } parler() { console.log(...); } }"
+    },
+    starter: "class Animal {\n  constructor(nom, son) {\n    // Ton code ici\n  }\n\n  parler() {\n    // Ton code ici\n  }\n}\n\nconst chien = new Animal('Rex', 'Woof');\nconst chat = new Animal('Mimi', 'Miaou');\nchien.parler();\nchat.parler();",
+    check: (output) => output.trim() === 'Rex dit Woof !\nMimi dit Miaou !',
+    expected: 'Rex dit Woof !\nMimi dit Miaou !'
+  }
+];
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let lang = localStorage.getItem('lang') || 'fr';
+let theme = localStorage.getItem('js_theme') || 'dark';
+let currentId = 1;
+let done = new Set(JSON.parse(localStorage.getItem('js_done') || '[]'));
+
+// ─── Theme ───────────────────────────────────────────────────────────────────
+function applyTheme() {
+  if (theme === 'light') {
+    document.body.classList.add('light');
+    document.getElementById('theme-toggle').textContent = '🌙';
+  } else {
+    document.body.classList.remove('light');
+    document.getElementById('theme-toggle').textContent = '☀️';
+  }
+  localStorage.setItem('js_theme', theme);
+}
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  theme = theme === 'dark' ? 'light' : 'dark';
+  applyTheme();
+});
+
+// ─── Language ────────────────────────────────────────────────────────────────
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('lang', l);
+  document.getElementById('btn-fr').classList.toggle('active', l === 'fr');
+  document.getElementById('btn-en').classList.toggle('active', l === 'en');
+  // Update static i18n elements
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (I18N[l][key]) el.textContent = I18N[l][key];
+  });
+  // Re-render sidebar and current exercise
+  renderSidebar();
+  loadExercise(currentId);
+}
+
+// ─── Sidebar ─────────────────────────────────────────────────────────────────
+function renderSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  // Keep the title div
+  const titleDiv = sidebar.querySelector('.sidebar-title');
+  sidebar.innerHTML = '';
+  if (titleDiv) {
+    titleDiv.textContent = I18N[lang].exercises;
+    sidebar.appendChild(titleDiv);
+  }
+
+  EXERCISES.forEach(ex => {
+    const item = document.createElement('div');
+    item.className = 'exercise-item' + (done.has(ex.id) ? ' done' : '') + (ex.id === currentId ? ' active' : '');
+    item.innerHTML = `
+      <div class="ex-icon">${done.has(ex.id) ? '✓' : ex.id}</div>
+      <div class="ex-info">
+        <div class="ex-name">${ex.name[lang]}</div>
+        <div class="ex-level"><span class="badge-${ex.level}">${I18N[lang].level[ex.level]}</span></div>
+      </div>
+    `;
+    item.addEventListener('click', () => loadExercise(ex.id));
+    sidebar.appendChild(item);
+  });
+}
+
+// ─── Load exercise ────────────────────────────────────────────────────────────
+function loadExercise(id) {
+  currentId = id;
+  const ex = EXERCISES.find(e => e.id === id);
+  document.getElementById('ex-title').textContent = `${ex.id}. ${ex.name[lang]}`;
+  document.getElementById('ex-description').textContent = ex.desc[lang];
+  document.getElementById('expected-display').textContent = ex.expected;
+  document.getElementById('hint-box').style.display = 'none';
+  document.getElementById('hint-box').textContent = ex.hint[lang];
+  document.getElementById('output').textContent = '';
+  document.getElementById('output').className = '';
+  document.getElementById('status-msg').className = 'status-msg';
+
+  // Load saved code or starter
+  const saved = localStorage.getItem('js_code_' + id);
+  document.getElementById('code-editor').value = saved !== null ? saved : ex.starter;
+
+  // Update sidebar active state
+  document.querySelectorAll('.exercise-item').forEach((el, i) => {
+    const exId = EXERCISES[i].id;
+    el.classList.toggle('active', exId === id);
+  });
+
+  updateProgress();
+}
+
+// ─── Progress ─────────────────────────────────────────────────────────────────
+function updateProgress() {
+  const pct = (done.size / EXERCISES.length) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+}
+
+// ─── Run code ─────────────────────────────────────────────────────────────────
+function runUserCode(code) {
+  const output = [];
+  const _log = console.log;
+  console.log = (...args) => output.push(args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '));
+  try {
+    new Function(code)();
+    console.log = _log;
+    return { out: output.join('\n'), error: null };
+  } catch(e) {
+    console.log = _log;
+    return { out: '', error: e.message };
+  }
+}
+
+// ─── Buttons ──────────────────────────────────────────────────────────────────
+document.getElementById('btn-run').addEventListener('click', () => {
+  const code = document.getElementById('code-editor').value;
+  localStorage.setItem('js_code_' + currentId, code);
+  const { out, error } = runUserCode(code);
+  const outEl = document.getElementById('output');
+  if (error) {
+    outEl.textContent = '⚠ ' + error;
+    outEl.className = 'error';
+  } else {
+    outEl.textContent = out || '(aucune sortie)';
+    outEl.className = out ? '' : '';
+  }
+  document.getElementById('status-msg').className = 'status-msg';
+});
+
+document.getElementById('btn-check').addEventListener('click', () => {
+  const code = document.getElementById('code-editor').value;
+  localStorage.setItem('js_code_' + currentId, code);
+  const { out, error } = runUserCode(code);
+  const outEl = document.getElementById('output');
+  const statusEl = document.getElementById('status-msg');
+
+  if (error) {
+    outEl.textContent = '⚠ ' + error;
+    outEl.className = 'error';
+    statusEl.textContent = I18N[lang]['msg-fail'];
+    statusEl.className = 'status-msg fail';
+    return;
+  }
+
+  outEl.textContent = out;
+  const ex = EXERCISES.find(e => e.id === currentId);
+  const passed = ex.check(out, code);
+
+  if (passed) {
+    outEl.className = 'success';
+    statusEl.textContent = I18N[lang]['msg-ok'];
+    statusEl.className = 'status-msg ok';
+    done.add(currentId);
+    localStorage.setItem('js_done', JSON.stringify([...done]));
+    renderSidebar();
+    updateProgress();
+  } else {
+    outEl.className = 'error';
+    statusEl.textContent = I18N[lang]['msg-fail'];
+    statusEl.className = 'status-msg fail';
+  }
+});
+
+document.getElementById('btn-hint').addEventListener('click', () => {
+  const hintEl = document.getElementById('hint-box');
+  const ex = EXERCISES.find(e => e.id === currentId);
+  hintEl.textContent = ex.hint[lang];
+  hintEl.style.display = hintEl.style.display === 'none' || !hintEl.style.display ? 'block' : 'none';
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  const ex = EXERCISES.find(e => e.id === currentId);
+  document.getElementById('code-editor').value = ex.starter;
+  localStorage.removeItem('js_code_' + currentId);
+  document.getElementById('output').textContent = '';
+  document.getElementById('output').className = '';
+  document.getElementById('status-msg').className = 'status-msg';
+});
+
+// Save code on type
+document.getElementById('code-editor').addEventListener('input', () => {
+  localStorage.setItem('js_code_' + currentId, document.getElementById('code-editor').value);
+});
+
+// Tab key support in editor
+document.getElementById('code-editor').addEventListener('keydown', (e) => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const ta = e.target;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    ta.value = ta.value.substring(0, start) + '  ' + ta.value.substring(end);
+    ta.selectionStart = ta.selectionEnd = start + 2;
+  }
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+applyTheme();
+setLang(lang);
+renderSidebar();
+loadExercise(1);
+</script>
+</body>
+</html>
